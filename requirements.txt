@@ -2,4 +2,4 @@ pandas
 streamlit
 pydantic
 matplotlib
-streamlit-aggrid
+pyinstaller

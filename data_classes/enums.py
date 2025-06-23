@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class Poignee(str, Enum):
+class Poignee(StrEnum):
     NONE = "Non"
     SIMPLE = "1️⃣ Simple"
     DOUBLE = "2️⃣ Double"
@@ -20,7 +20,7 @@ class Poignee(str, Enum):
                 return 40
 
 
-class Attack(str, Enum):
+class Attack(StrEnum):
     PETITE = "🤏 Petite"
     GUARDE = "🐶 Guard"
     GUARDE_SANS = "💂 Guarde sans"
