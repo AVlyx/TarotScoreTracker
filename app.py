@@ -16,12 +16,25 @@ import random as rd
 st.set_page_config(layout="wide", page_title="Tarot Score Tracker", page_icon="🃏")
 
 
+@st.dialog("Delete session")
+def delete_session(session: Session, i: int):
+    hist: History = st.session_state.history
+    if st.button("Confirm", key=f"Confirm delete {i}"):
+        hist.history.remove(session)
+        hist.save()
+        st.rerun()
+
+
 def landing_page_display_session(session: Session, i: int):
     col1, col2 = st.columns(2)
     with col1:
-        if st.button(str(session.date_), type="primary", key=f"Play session {i}"):
-            st.session_state.session = session
-            st.rerun()
+        col_date, col_delete, _ = st.columns([1, 1, 3])
+        with col_date:
+            if st.button(str(session.date_), type="primary", key=f"Play session {i}"):
+                st.session_state.session = session
+                st.rerun()
+        with col_delete:
+            st.button("delete", key=f"delete{i}", icon=":material/delete:", on_click=delete_session, args=(session, i))
         st.dataframe(session.scores_df())
     with col2:
         st.pyplot(session.plot_score_evolution())
@@ -54,6 +67,7 @@ def landing_page_sidebar():
         return
     if st.button("Save Player modifications"):
         hist.players = players
+        hist.save()
         st.rerun()
     if st.button("Start new game"):
         new_game()
@@ -202,10 +216,10 @@ def new_round():
 
 
 def session_sidebar():
+    session: Session = st.session_state.session
     if st.button("Home", icon=":material/home:", type="tertiary"):
         st.session_state.session = None
         st.rerun()
-    session: Session = st.session_state.session
     st.table(session.scores_df())
     st.button("Shuffle players", use_container_width=True, on_click=rd.shuffle, args=(session.players,))
     if st.button("New round", type="primary", use_container_width=True):
