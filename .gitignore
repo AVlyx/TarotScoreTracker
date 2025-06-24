@@ -2,3 +2,6 @@ TarotScoreTracker
 __pycache__
 .venv
 TarotScoreTracker-win32-x64
+node_modules
+build
+dist

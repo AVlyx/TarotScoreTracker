@@ -1,17 +1,15 @@
 from enum import StrEnum
+from typing import Literal
 
 
 class Poignee(StrEnum):
-    NONE = "Non"
-    SIMPLE = "1️⃣ Simple"
-    DOUBLE = "2️⃣ Double"
-    TRIPLE = "3️⃣ Triple"
+    SIMPLE = "1️⃣"
+    DOUBLE = "2️⃣"
+    TRIPLE = "3️⃣"
 
     @property
     def score(self) -> int:
         match self:
-            case Poignee.NONE:
-                return 0
             case Poignee.SIMPLE:
                 return 20
             case Poignee.DOUBLE:
@@ -21,10 +19,10 @@ class Poignee(StrEnum):
 
 
 class Attack(StrEnum):
-    PETITE = "🤏 Petite"
-    GUARDE = "🐶 Guard"
-    GUARDE_SANS = "💂 Guarde sans"
-    GUARDE_CONTRE = "🥷 Guarde contre"
+    PETITE = "🤏"
+    GUARDE = "🐶"
+    GUARDE_SANS = "💂"
+    GUARDE_CONTRE = "🥷"
 
     @property
     def multiplicator(self) -> int:
@@ -37,3 +35,16 @@ class Attack(StrEnum):
                 return 4
             case Attack.GUARDE_CONTRE:
                 return 6
+
+
+class PetitAuBout(StrEnum):
+    ATTACK = "⚔️"
+    DEFENSE = "🛡️"
+
+    @property
+    def score(self) -> int:
+        match self:
+            case PetitAuBout.ATTACK:
+                return 10
+            case PetitAuBout.DEFENSE:
+                return -10

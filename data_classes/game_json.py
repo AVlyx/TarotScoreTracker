@@ -1,6 +1,6 @@
 from typing import Self, overload
 from pydantic import BaseModel
-from data_classes.enums import Poignee, Attack
+from data_classes.enums import Poignee, Attack, PetitAuBout
 from pandas import DataFrame
 from datetime import date
 import os
@@ -23,8 +23,8 @@ class Round5P(BaseModel):
     attack_type: Attack
     points: float
     bouts: int
-    petit_au_bout: bool
-    poignee: Poignee
+    petit_au_bout: PetitAuBout | None
+    poignees: list[Poignee]
 
     def set_attack(self, attack: str):
         self.attack = attack
@@ -44,18 +44,20 @@ class Round5P(BaseModel):
     def set_bouts(self, bouts: int):
         self.bouts = bouts
 
-    def set_petit_au_bout(self, petit_au_bout: bool):
+    def set_petit_au_bout(self, petit_au_bout: PetitAuBout | None):
         self.petit_au_bout = petit_au_bout
 
-    def set_poignee(self, poignee: Poignee):
-        self.poignee = poignee
+    def set_poignee(self, poignees: list[Poignee]):
+        self.poignees = poignees
 
     def scores(self) -> dict[str, float]:
-        score: float = self.points - points_per_bout[self.bouts]
-        score += 25 if score >= 0 else -25
-        score += 10 if self.petit_au_bout else 0
-        score += self.poignee.score
+        win: int = 1 if self.points >= points_per_bout[self.bouts] else -1  # 1 if at tack won -1 if defense won
+        score: float = (self.points - points_per_bout[self.bouts]) * win  # absolute value of score
+        score += 25  # base score that will be won / lost
+        score += sum(p.score for p in self.poignees)  # bonus points from poignee go to winning team. There can be up to 2 poignee in a round
+        score += 0 if not self.petit_au_bout else self.petit_au_bout.score * win  # points go to team with petit au bout. Not winning team
         score *= self.attack_type.multiplicator
+        score *= win
         if self.attack == self.appel:
             scores: dict[str, float] = {self.attack: score * 4} | {def_: -score for def_ in self.defense}
         else:

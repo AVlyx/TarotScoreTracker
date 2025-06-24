@@ -9,7 +9,7 @@ from pandas import DataFrame
 from data_classes.game_json import History, Session, Round5P
 
 # from data_classes.session_df import SessionDf
-from data_classes.enums import Attack, Poignee
+from data_classes.enums import Attack, Poignee, PetitAuBout
 import random as rd
 
 
@@ -19,7 +19,7 @@ st.set_page_config(layout="wide", page_title="Tarot Score Tracker", page_icon="�
 @st.dialog("Delete session")
 def delete_session(session: Session, i: int):
     hist: History = st.session_state.history
-    if st.button("Confirm", key=f"Confirm delete {i}"):
+    if st.button("Confirm", key=f"Confirm delete {i}", use_container_width=True):
         hist.history.remove(session)
         hist.save()
         st.rerun()
@@ -30,12 +30,12 @@ def landing_page_display_session(session: Session, i: int):
     with col1:
         col_date, col_delete, _ = st.columns([1, 1, 3])
         with col_date:
-            if st.button(str(session.date_), type="primary", key=f"Play session {i}"):
+            if st.button(str(session.date_), type="primary", key=f"Play session {i}", use_container_width=True):
                 st.session_state.session = session
                 st.rerun()
         with col_delete:
-            st.button("delete", key=f"delete{i}", icon=":material/delete:", on_click=delete_session, args=(session, i))
-        st.dataframe(session.scores_df())
+            st.button("delete", key=f"delete{i}", icon=":material/delete:", on_click=delete_session, args=(session, i), use_container_width=True)
+        st.dataframe(session.scores_df(), use_container_width=True)
     with col2:
         st.pyplot(session.plot_score_evolution())
 
@@ -61,7 +61,7 @@ def new_game():
 @st.fragment()
 def landing_page_sidebar():
     hist: History = st.session_state.history
-    players: list[str] = list(st.data_editor(DataFrame(hist.players, columns=["Players"]), num_rows="dynamic")["Players"])
+    players: list[str] = list(st.data_editor(DataFrame(hist.players, columns=["Players"]), num_rows="dynamic", use_container_width=True)["Players"])
     if len(set(players)) < len(players):
         st.error("Error: Duplicates in player list")
         return
@@ -95,21 +95,24 @@ def score_tracker():
                     options=session.players,
                     key=f"Preneur {i}",
                     index=session.players.index(round.attack),
-                    on_change=lambda x=f"Preneur {i}": round.set_attack(st.session_state[x]),
+                    on_change=lambda x: round.set_attack(st.session_state[x]),
+                    args=(f"Preneur {i}",),
                 )
                 round.appel = st.selectbox(
                     "Appelé",
                     options=session.players,
                     key=f"Called {i}",
                     index=session.players.index(round.appel),
-                    on_change=lambda x=f"Called {i}": round.set_appel(st.session_state[x]),
+                    on_change=lambda x: round.set_appel(st.session_state[x]),
+                    args=(f"Called {i}",),
                 )
                 round.defense = st.multiselect(
                     "Défense",
                     options=session.players,
                     key=f"defense {i}",
                     default=round.defense,
-                    on_change=lambda x=f"defense {i}": round.set_defense(st.session_state[x]),
+                    on_change=lambda x: round.set_defense(st.session_state[x]),
+                    args=(f"defense {i}",),
                 )
 
             with col_selec:
@@ -119,24 +122,27 @@ def score_tracker():
                         list(Attack),
                         index=list(Attack).index(round.attack_type),
                         key=f"attack_type {i}",
-                        on_change=lambda x=f"attack_type {i}": round.set_attack_type(st.session_state[x]),
+                        on_change=lambda x: round.set_attack_type(st.session_state[x]),
+                        args=(f"attack_type {i}",),
                     )
                 )
-                round.poignee = Poignee(
-                    st.selectbox(
-                        "Poignée",
-                        list(Poignee),
-                        index=list(Poignee).index(round.poignee),
-                        key=f"poignee {i}",
-                        on_change=lambda x=f"poignee {i}": round.set_poignee(st.session_state[x]),
-                    )
+                round.poignees = st.pills(
+                    "Poignée",
+                    [Poignee.SIMPLE, Poignee.SIMPLE, Poignee.DOUBLE, Poignee.DOUBLE, Poignee.TRIPLE],
+                    selection_mode="multi",
+                    key=f"poignee {i}",
+                    on_change=lambda x: round.set_poignee(st.session_state[x]),
+                    args=(f"poignee {i}",),
+                    help="Simple, double, triple. Les points de la poignée sont toujours remportés par l'équipe gagnante",
                 )
+
                 round.bouts = st.selectbox(
                     "Bouts",
                     options=[0, 1, 2, 3],
                     index=round.bouts,
                     key=f"bouts {i}",
-                    on_change=lambda x=f"bouts {i}": round.set_bouts(st.session_state[x]),
+                    on_change=lambda x: round.set_bouts(st.session_state[x]),
+                    args=(f"bouts {i}",),
                 )
 
             with col_score:
@@ -145,20 +151,26 @@ def score_tracker():
                     value=round.points,
                     min_value=0.0,
                     max_value=91.0,
+                    step=0.5,
+                    format="%0.1f",
                     key=f"points {i}",
-                    on_change=lambda x=f"points {i}": round.set_points(st.session_state[x]),
+                    on_change=lambda x: round.set_points(st.session_state[x]),
+                    args=(f"points {i}",),
+                    placeholder=None,
                 )
-                round.petit_au_bout = st.checkbox(
+                round.petit_au_bout = st.pills(
                     "Petit au bout",
-                    value=round.petit_au_bout,
+                    options=list(PetitAuBout),
                     key=f"petit_au_bout {i}",
-                    on_change=lambda x=f"petit_au_bout {i}": round.set_petit_au_bout(st.session_state[x]),
+                    on_change=lambda x: round.set_petit_au_bout(st.session_state[x]),
+                    args=(f"petit_au_bout {i}",),
+                    help="Les points vont à l'équipe remportant le petit au bout",
                 )
             if round.attack in round.defense or round.appel in round.defense:
                 st.warning("One player is defending and attacking")
                 return
         with col2:
-            st.dataframe(round.scores_df())
+            st.dataframe(round.scores_df(), use_container_width=True)
         st.divider()
 
 
@@ -177,36 +189,44 @@ def display_player_graphs():
 def new_round():
     session: Session = st.session_state.session
     with st.form("New round form"):
-        col_name, col_selec = st.columns([3, 2])
+        col_name, col_selec = st.columns(2)
         with col_name:
             attack = st.selectbox("Preneur", options=session.players, key=f"Preneur new round", index=None)
             appel = st.selectbox("Appelé", options=session.players, key=f"Called new round", index=None)
             defense = st.multiselect("Défense", options=session.players, key=f"defense new round", default=None)
         with col_selec:
-            attack_type = st.selectbox("Prise", list(Attack), index=None)
-            poignee = st.selectbox("Poignée", list(Poignee), index=0)
-            bouts = st.selectbox("Bouts", options=[0, 1, 2, 3], index=0)
+            attack_type = st.segmented_control("Prise", list(Attack))
+            poignees = st.pills(
+                "Poignée",
+                [Poignee.SIMPLE, Poignee.SIMPLE, Poignee.DOUBLE, Poignee.DOUBLE, Poignee.TRIPLE],
+                selection_mode="multi",
+                help="Simple, double, triple. Les points de la poignée sont toujours remportés par l'équipe gagnante",
+            )
+            bouts = st.segmented_control("Bouts", options=[0, 1, 2, 3], default=0)
         st.divider()
         col_p, col_c = st.columns([3, 2])
         with col_p:
-            points = st.number_input("Score", min_value=0.0, max_value=91.0)
+            points = st.number_input("Score", min_value=0.0, max_value=91.0, step=0.5, format="%0.1f", placeholder="Score", value=None)
         with col_c:
-            petit_au_bout = st.checkbox("Petit au bout")
+            petit_au_bout = st.pills("Petit au bout", options=list(PetitAuBout), help="Les points vont à l'équipe remportant le petit au bout")
 
         if st.form_submit_button():
-            if not attack or not appel or not defense or not attack_type or not poignee:
+            print(attack, appel, defense, attack_type, bouts, points)
+            if not attack or not appel or not defense or not attack_type or bouts == None or not points:
                 st.error("Fill before submitting")
                 return
             if attack in defense or appel in defense:
                 st.error("One player is defending and attacking")
                 return
+            if len(poignees) > 2:
+                st.error("Combien d'atouts en une seule game????")
             session.rounds.append(
                 Round5P(
                     attack=attack,
                     appel=appel,
                     defense=defense,
                     attack_type=attack_type,
-                    poignee=poignee,
+                    poignees=poignees,
                     bouts=bouts,
                     petit_au_bout=petit_au_bout,
                     points=points,
